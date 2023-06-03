@@ -193,7 +193,7 @@ const data = [
   };
   const createRow = ({ name: firstname, surname, phone }) => {
     const tr = document.createElement('tr');
-    tr.classList.add('contact')
+    tr.classList.add('contact');
 
     const tdDel = document.createElement('td');
     tdDel.classList.add('delete');
@@ -252,29 +252,42 @@ const data = [
     formOverlay.addEventListener('click', (e) => {
       const target = e.target;
       if (target === formOverlay || target.closest('.close')) {
-      formOverlay.classList.remove('is-visible');
+        formOverlay.classList.remove('is-visible');
       }
     });
-    btnDel.addEventListener('click', ()=> {
-      document.querySelectorAll('.delete').forEach(del => {
-        del.classList.toggle('is-visible')
-      })
-    })
-    list.addEventListener('click', e => {
-      const target = e.target
+    btnDel.addEventListener('click', () => {
+      document.querySelectorAll('.delete').forEach((del) => {
+        del.classList.toggle('is-visible');
+      });
+    });
+    list.addEventListener('click', (e) => {
+      const target = e.target;
       if (target.closest('.del-icon')) {
-        target.closest('.contact').remove()
+        target.closest('.contact').remove();
       }
-    })
-
-    setTimeout(() => {
-      const contact = createRow({
-        name: 'Elise',
-        surname: 'Asaj',
-        phone: '0001'
-      })
-      list.append(contact)
-    }, 2000)
+    });
+    const tr = document.querySelector('tr');
+    const tbody = document.querySelector('tbody');
+    const trs = document.querySelectorAll('tr');
+    tr.addEventListener('click', (e) => {
+      const artr = Array.from(trs);
+      if (e.target === trs[0].childNodes[3]) {
+        const sortedRows = sorted(artr, 1);
+        tbody.append(...sortedRows);
+      }
+      if (e.target === trs[0].childNodes[5]) {
+        const sortedRows = sorted(artr, 2);
+        tbody.append(...sortedRows);
+      }
+    });
+    const sorted = (artr, cell) => {
+      const rows = artr
+        .slice(1)
+        .sort((rowA, rowB) =>
+          rowA.cells[cell].innerHTML > rowB.cells[cell].innerHTML ? 1 : -1,
+        );
+      return rows;
+    };
   };
   window.phoneBookInit = init;
 }
