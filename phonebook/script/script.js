@@ -1,28 +1,61 @@
 'use strict';
-const data = [
-  {
-    name: 'Иван',
-    surname: 'Петров',
-    phone: '+79514545454',
-  },
-  {
-    name: 'Игорь',
-    surname: 'Семёнов',
-    phone: '+79999999999',
-  },
-  {
-    name: 'Семён',
-    surname: 'Иванов',
-    phone: '+79800252525',
-  },
-  {
-    name: 'Мария',
-    surname: 'Попова',
-    phone: '+79876543210',
-  },
-];
+// const data = [
+//   {
+//     name: 'Иван',
+//     surname: 'Петров',
+//     phone: '+79514545454',
+//   },
+//   {
+//     name: 'Игорь',
+//     surname: 'Семёнов',
+//     phone: '+79999999999',
+//   },
+//   {
+//     name: 'Семён',
+//     surname: 'Иванов',
+//     phone: '+79800252525',
+//   },
+//   {
+//     name: 'Мария',
+//     surname: 'Попова',
+//     phone: '+79876543210',
+//   },
+// ];
 
 {
+  const setStorage = (key, obj) => {
+    const contacts = getStorage(key);
+    contacts.push(obj);
+    const newContactsList = localStorage.setItem(key, JSON.stringify(contacts));
+    return newContactsList;
+  };
+
+  const getStorage = (key) => {
+    let contacts;
+
+    if (localStorage.length === 0) {
+      contacts = [];
+    } else {
+      contacts = JSON.parse(localStorage.getItem(key));
+      console.log(contacts);
+    }
+    return contacts;
+  };
+
+  const removeStorage = (phone) => {
+    let contacts = getStorage('contact');
+    contacts.forEach((contact) => {
+      if (contact.phone === phone) {
+        contacts.splice(contact, 1);
+      }
+    });
+    localStorage.setItem('contact', JSON.stringify(contacts));
+  };
+
+  // const addContactData = (contact) => {
+  //   data.push(contact);
+  //   console.log(data);
+  // };
   const createContainer = () => {
     const container = document.createElement('div');
     container.classList.add('container');
@@ -174,12 +207,12 @@ const data = [
       },
     ]);
     const table = createTable();
-    const form = createForm();
+    const { form, overlay } = createForm();
     const footer = createFooter(title);
 
     header.headerContainer.append(logo);
 
-    main.mainContainer.append(buttonGroup.btnWrapper, table, form.overlay);
+    main.mainContainer.append(buttonGroup.btnWrapper, table, overlay);
 
     app.append(header, main, footer);
     return {
@@ -187,8 +220,8 @@ const data = [
       logo,
       btnAdd: buttonGroup.btns[0],
       btnDel: buttonGroup.btns[1],
-      formOverlay: form.overlay,
-      form: form.form,
+      formOverlay: overlay,
+      form: form,
     };
   };
   const createRow = ({ name: firstname, surname, phone }) => {
@@ -206,6 +239,7 @@ const data = [
     tdSurname.textContent = surname;
     const tdPhone = document.createElement('td');
     const phoneLink = document.createElement('a');
+    phoneLink.classList.add('phonelink');
     phoneLink.href = `tel:${phone}`;
     phoneLink.textContent = phone;
     tr.phoneLink = phoneLink;
@@ -224,6 +258,7 @@ const data = [
     elem.append(...allRow);
     return allRow;
   };
+
   const hoverRow = (allRow, logo) => {
     const text = logo.textContent;
     allRow.forEach((contact) => {
@@ -236,25 +271,26 @@ const data = [
     });
   };
 
-  const init = (selectorApp, title) => {
-    const app = document.querySelector(selectorApp);
-    const phoneBook = renderPhoneBook(app, title);
-    const { list, logo, btnAdd, btnDel, formOverlay, form } = phoneBook;
-
-    // функционал
-    const allRow = renderContacts(list, data);
-    hoverRow(allRow, logo);
-
-    btnAdd.addEventListener('click', () => {
+  const modalControl = (btnAdd, formOverlay) => {
+    const openModal = () => {
       formOverlay.classList.add('is-visible');
-    });
-
+    };
+    const closeModal = () => {
+      formOverlay.classList.remove('is-visible');
+    };
+    btnAdd.addEventListener('click', openModal);
     formOverlay.addEventListener('click', (e) => {
       const target = e.target;
       if (target === formOverlay || target.closest('.close')) {
-        formOverlay.classList.remove('is-visible');
+        closeModal();
       }
     });
+    return {
+      closeModal,
+    };
+  };
+
+  const deleteControl = (btnDel, list) => {
     btnDel.addEventListener('click', () => {
       document.querySelectorAll('.delete').forEach((del) => {
         del.classList.toggle('is-visible');
@@ -262,20 +298,61 @@ const data = [
     });
     list.addEventListener('click', (e) => {
       const target = e.target;
+      console.log(target);
       if (target.closest('.del-icon')) {
-        target.closest('.contact').remove();
+        const contact = target.closest('.contact');
+        contact.remove();
+        removeStorage(contact.querySelector('.phonelink').textContent);
       }
     });
+  };
+  const addContactPage = (contact, list) => {
+    list.append(createRow(contact));
+  };
+
+  const formControl = (form, list, closeModal) => {
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const formData = new FormData(e.target);
+      const newContact = Object.fromEntries(formData);
+      console.log(newContact);
+      addContactPage(newContact, list);
+      // addContactData(newContact);
+      setStorage('contact', newContact);
+      form.reset();
+      closeModal();
+    });
+  };
+
+  const init = (selectorApp, title) => {
+    const app = document.querySelector(selectorApp);
+    const { list, logo, btnAdd, btnDel, formOverlay, form } = renderPhoneBook(
+      app,
+      title,
+    );
+
+    // функционал
+    const allRow = renderContacts(list, getStorage('contact'));
+    const { closeModal } = modalControl(btnAdd, formOverlay);
+
+    hoverRow(allRow, logo);
+    deleteControl(btnDel, list);
+    formControl(form, list, closeModal);
+
     const tr = document.querySelector('tr');
     const tbody = document.querySelector('tbody');
     const trs = document.querySelectorAll('tr');
     tr.addEventListener('click', (e) => {
       const artr = Array.from(trs);
+      const sortField = e.target.innerHTML;
+      console.log(sortField);
       if (e.target === trs[0].childNodes[3]) {
+        localStorage.setItem('sort', 'name');
         const sortedRows = sorted(artr, 1);
         tbody.append(...sortedRows);
       }
       if (e.target === trs[0].childNodes[5]) {
+        localStorage.setItem('sort', 'surname');
         const sortedRows = sorted(artr, 2);
         tbody.append(...sortedRows);
       }
