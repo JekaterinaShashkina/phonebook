@@ -255,6 +255,17 @@
   };
   const renderContacts = (elem, data) => {
     const allRow = data.map(createRow);
+    const s = localStorage.getItem('sort');
+    if (s === 'name') {
+      allRow.sort((rowA, rowB) =>
+        rowA.cells[1].innerHTML > rowB.cells[1].innerHTML ? 1 : -1,
+      );
+    }
+    if (s === 'surname') {
+      allRow.sort((rowA, rowB) =>
+        rowA.cells[2].innerHTML > rowB.cells[2].innerHTML ? 1 : -1,
+      );
+    }
     elem.append(...allRow);
     return allRow;
   };
@@ -317,7 +328,6 @@
       const newContact = Object.fromEntries(formData);
       console.log(newContact);
       addContactPage(newContact, list);
-      // addContactData(newContact);
       setStorage('contact', newContact);
       form.reset();
       closeModal();
@@ -333,6 +343,7 @@
 
     // функционал
     const allRow = renderContacts(list, getStorage('contact'));
+
     const { closeModal } = modalControl(btnAdd, formOverlay);
 
     hoverRow(allRow, logo);
@@ -344,8 +355,6 @@
     const trs = document.querySelectorAll('tr');
     tr.addEventListener('click', (e) => {
       const artr = Array.from(trs);
-      const sortField = e.target.innerHTML;
-      console.log(sortField);
       if (e.target === trs[0].childNodes[3]) {
         localStorage.setItem('sort', 'name');
         const sortedRows = sorted(artr, 1);
@@ -358,6 +367,7 @@
       }
     });
     const sorted = (artr, cell) => {
+      console.log(artr, cell);
       const rows = artr
         .slice(1)
         .sort((rowA, rowB) =>
