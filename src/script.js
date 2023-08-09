@@ -1,12 +1,14 @@
-import { getStorage } from './modules/serviceStorage.js';
+import { getStorage } from './script/serviceStorage';
 
-import render from './modules/render.js';
+import render from './script/render';
 import {
   hoverRow,
   modalControl,
   deleteControl,
   formControl,
-} from './modules/control.js';
+} from './script/control';
+
+import './scss/index.scss';
 
 const { renderContacts, renderPhoneBook } = render;
 {
